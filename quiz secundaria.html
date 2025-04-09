@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia de Cultura General</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Chewy', cursive;
+      background: linear-gradient(135deg, #e0f7fa, #ffe0b2);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      animation: popIn 1s ease-in-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .question {
+      font-size: 1.5rem;
+      margin: 20px 0;
+    }
+    .story {
+      font-size: 1rem;
+      color: #555;
+      margin-top: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .incorrect {
+      background-color: #f44336;
+      color: white;
+    }
+    .start-screen, .quiz-screen, .result-screen {
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="start" class="start-screen active">
+      <h1>¡Bienvenido a la Trivia Escolar!</h1>
+      <input type="text" id="username" placeholder="Escribe tu nombre..." />
+      <br><br>
+      <button onclick="startQuiz()">Comenzar</button>
+    </div>
+
+    <div id="quiz" class="quiz-screen">
+      <div class="question" id="question"></div>
+      <div id="answers"></div>
+      <div class="story" id="story"></div>
+    </div>
+
+    <div id="result" class="result-screen">
+      <h2 id="finalScore"></h2>
+      <p id="finalMessage"></p>
+      <button onclick="startQuiz()">Volver a jugar</button>
+    </div>
+  </div>
+
+  <script>
+    const questionsSet = [
+      [
+        { q: "¿Cuál es la capital de Francia?", a: true, story: "París es famosa por su Torre Eiffel y su historia rica en arte y cultura." },
+        { q: "¿El Sol es un planeta?", a: false, story: "El Sol es una estrella, no un planeta." },
+        { q: "¿El agua hierve a 100°C?", a: true, story: "A nivel del mar, el agua hierve a 100 grados Celsius." },
+        { q: "¿Los humanos tienen 3 pulmones?", a: false, story: "Los humanos tienen dos pulmones, uno a cada lado del tórax." },
+        { q: "¿La Gran Muralla China se puede ver desde el espacio?", a: false, story: "Este es un mito popular; no es visible a simple vista desde el espacio." },
+        { q: "¿Cristóbal Colón descubrió América en 1492?", a: true, story: "Colón llegó a América en 1492 bajo la bandera española." },
+        { q: "¿La célula es la unidad básica de la vida?", a: true, story: "Todas las funciones vitales ocurren dentro de las células." },
+        { q: "¿La fotosíntesis ocurre en los animales?", a: false, story: "La fotosíntesis es un proceso exclusivo de las plantas." },
+        { q: "¿2 + 2 = 5?", a: false, story: "2 + 2 siempre será igual a 4." },
+        { q: "¿Los delfines son mamíferos?", a: true, story: "Los delfines respiran aire y alimentan a sus crías con leche." }
+      ],
+      [
+        { q: "¿La Tierra gira alrededor del Sol?", a: true, story: "Este es el modelo heliocéntrico propuesto por Copérnico." },
+        { q: "¿Los murciélagos son ciegos?", a: false, story: "Los murciélagos sí pueden ver, aunque también usan ecolocalización." },
+        { q: "¿El cuerpo humano tiene 206 huesos?", a: true, story: "Un adulto promedio tiene 206 huesos." },
+        { q: "¿La Antártida es un desierto?", a: true, story: "A pesar del hielo, su escasa precipitación la clasifica como desierto." },
+        { q: "¿El plomo es un metal pesado?", a: true, story: "Es denso, tóxico y muy usado en la antigüedad." },
+        { q: "¿El Everest es la montaña más alta del mundo?", a: true, story: "Mide más de 8.800 metros sobre el nivel del mar." },
+        { q: "¿Los gatos siempre caen de pie?", a: false, story: "No siempre; depende de la altura y reflejos del gato." },
+        { q: "¿Shakespeare escribió 'Cien años de soledad'?", a: false, story: "Esa obra fue escrita por Gabriel García Márquez." },
+        { q: "¿Las abejas mueren después de picar?", a: true, story: "Cuando pican a humanos, su aguijón queda atrapado." },
+        { q: "¿El oxígeno es necesario para la respiración celular?", a: true, story: "Sin oxígeno, las células no producen energía eficientemente." }
+      ]
+      // Puedes agregar 3 sets más aquí si lo deseas
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let userName = "";
+
+    function startQuiz() {
+      userName = document.getElementById("username").value || "Estudiante";
+      const setIndex = Math.floor(Math.random() * questionsSet.length);
+      currentQuestions = [...questionsSet[setIndex]];
+      shuffleArray(currentQuestions);
+      currentIndex = 0;
+      score = 0;
+
+      document.getElementById("start").classList.remove("active");
+      document.getElementById("result").classList.remove("active");
+      document.getElementById("quiz").classList.add("active");
+
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = currentQuestions[currentIndex];
+      document.getElementById("question").textContent = q.q;
+      document.getElementById("answers").innerHTML = `
+        <button class="correct" onclick="selectAnswer(true)">Verdadero</button>
+        <button class="incorrect" onclick="selectAnswer(false)">Falso</button>
+      `;
+      document.getElementById("story").textContent = "";
+    }
+
+    function selectAnswer(answer) {
+      const q = currentQuestions[currentIndex];
+      if (answer === q.a) score++;
+      document.getElementById("story").textContent = q.story;
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex < 10) {
+          showQuestion();
+        } else {
+          endQuiz();
+        }
+      }, 2000);
+    }
+
+    function endQuiz() {
+      document.getElementById("quiz").classList.remove("active");
+      document.getElementById("result").classList.add("active");
+      document.getElementById("finalScore").textContent = `${userName}, tu puntaje fue ${score}/10`;
+      let message = score >= 8 ? "¡Excelente trabajo!" : score >= 5 ? "¡Buen intento!" : "Sigue practicando.";
+      document.getElementById("finalMessage").textContent = message;
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+  </script>
+</body>
+</html>
